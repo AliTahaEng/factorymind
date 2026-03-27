@@ -1,0 +1,44 @@
+preprocessing:
+  image_size: 640
+  normalize_mean: [0.485, 0.456, 0.406]
+  normalize_std: [0.229, 0.224, 0.225]
+  clahe_clip_limit: 2.0
+  denoise_h: 10
+
+split:
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  random_seed: 42
+
+yolo:
+  model: yolov8m.pt
+  epochs_phase1: 10
+  epochs_phase2: 40
+  batch_size: 16
+  imgsz: 640
+  lr0: 0.001
+  freeze_layers: 10
+
+vit:
+  base_model: google/vit-base-patch16-224
+  lora_rank: 8
+  lora_alpha: 16
+  use_dora: true
+  target_modules: ["query", "value"]
+  epochs: 20
+  learning_rate: 0.0002
+  batch_size: 16
+  fp16: true
+  warmup_ratio: 0.1
+
+anomaly:
+  model: EfficientAD
+  eval_model: Patchcore
+  image_size: 256
+  batch_size: 32
+
+evaluation:
+  yolo_map_threshold: 0.80
+  vit_accuracy_threshold: 0.90
+  anomaly_auroc_threshold: 0.95
