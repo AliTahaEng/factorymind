@@ -159,11 +159,13 @@ services:
     env_file:
       - .env
     environment:
-      TRITON_SERVER_URL: triton-server:8001
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      POSTGRES_URL: postgresql://factorymind:secret@postgres:5432/factorymind
       S3_ENDPOINT_URL: http://localstack:4566
+      TRITON_HOST: triton-server
+      TRITON_PORT: "8001"
+      ENABLE_TRITON: "false"
+      ENABLE_KAFKA_CONSUMER: "true"
     ports:
       - "8002:8001"
     networks:
@@ -183,12 +185,12 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_URL: postgresql://factorymind:secret@postgres:5432/factorymind
+      DATABASE_URL: postgresql+asyncpg://factorymind:secret@postgres:5432/factorymind
       REDIS_URL: redis://redis:6379/0
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
       MLFLOW_TRACKING_URI: http://mlflow-server:5000
-      S3_ENDPOINT_URL: http://localstack:4566
+      JWT_SECRET_KEY: factorymind-dev-secret-key-change-in-production
     ports:
       - "8000:8000"
     networks:

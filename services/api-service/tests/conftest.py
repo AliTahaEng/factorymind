@@ -1,14 +1,11 @@
-"""Shared test fixtures for api-service."""
+"""Test fixtures for API service."""
 import pytest
 from httpx import AsyncClient, ASGITransport
+from api_service import container as _container_module
 
-from src.main import app
 
-
-@pytest.fixture
-async def client():
-    """Async test client."""
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        yield ac
+@pytest.fixture(autouse=True)
+def reset_container():
+    _container_module._container = None
+    yield
+    _container_module._container = None
