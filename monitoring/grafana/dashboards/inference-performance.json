@@ -1,0 +1,37 @@
+{
+  "description": "Inference latency, throughput, defect rate",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "title": "Inference Latency (p50/p95/p99)",
+      "type": "timeseries",
+      "targets": [
+        {"expr": "histogram_quantile(0.50, rate(inference_latency_seconds_bucket[5m]))", "legendFormat": "p50"},
+        {"expr": "histogram_quantile(0.95, rate(inference_latency_seconds_bucket[5m]))", "legendFormat": "p95"},
+        {"expr": "histogram_quantile(0.99, rate(inference_latency_seconds_bucket[5m]))", "legendFormat": "p99"}
+      ]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "title": "Defect Rate",
+      "type": "timeseries",
+      "targets": [{"expr": "rate(defect_detections_total[5m]) / rate(inference_requests_total[5m])", "legendFormat": "Defect Rate"}]
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["factorymind", "inference"],
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "FactoryMind Inference Performance",
+  "uid": "factorymind-inference",
+  "version": 1
+}

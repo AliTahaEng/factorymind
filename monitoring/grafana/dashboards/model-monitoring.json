@@ -1,0 +1,23 @@
+{
+  "description": "Model version tracking, anomaly scores",
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+      "id": 1,
+      "title": "Inference Request Rate by Model",
+      "type": "timeseries",
+      "targets": [{"expr": "rate(inference_requests_total[5m])", "legendFormat": "{{model_name}} {{result}}"}]
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["factorymind", "model"],
+  "time": {"from": "now-24h", "to": "now"},
+  "timezone": "browser",
+  "title": "FactoryMind Model Monitoring",
+  "uid": "factorymind-model",
+  "version": 1
+}

@@ -1,0 +1,50 @@
+groups:
+  - name: inference_service_alerts
+    rules:
+      - alert: HighInferenceLatency
+        expr: histogram_quantile(0.95, rate(inference_latency_seconds_bucket[5m])) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: inference-service
+        annotations:
+          summary: "High inference latency p95 > 2s"
+          description: "p95 latency is {{ $value | humanizeDuration }}"
+
+      - alert: HighDefectRate
+        expr: rate(defect_detections_total[10m]) / rate(inference_requests_total[10m]) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+          service: inference-service
+        annotations:
+          summary: "Defect rate >30% over 10 minutes"
+          description: "Defect rate: {{ $value | humanizePercentage }}"
+
+      - alert: InferenceServiceDown
+        expr: up{job="inference-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: inference-service
+        annotations:
+          summary: "Inference service is down"
+          description: "Unreachable for more than 1 minute"
+
+      - alert: KafkaHighConsumerLag
+        expr: kafka_consumer_lag > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Kafka consumer lag > 1000"
+          description: "Lag: {{ $value }} messages"
+
+      - alert: InferenceHighErrorRate
+        expr: rate(inference_requests_total{result="error"}[5m]) / rate(inference_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Inference error rate >5%"
+          description: "Error rate: {{ $value | humanizePercentage }}"

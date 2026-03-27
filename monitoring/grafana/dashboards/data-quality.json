@@ -1,0 +1,32 @@
+{
+  "description": "Kafka consumer lag, data quality metrics",
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "id": 1,
+      "title": "Kafka Consumer Lag",
+      "type": "timeseries",
+      "targets": [{"expr": "kafka_consumer_lag", "legendFormat": "{{topic}}"}]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "id": 2,
+      "title": "Messages Processed/s",
+      "type": "timeseries",
+      "targets": [{"expr": "rate(kafka_messages_processed_total[5m])", "legendFormat": "{{topic}} {{status}}"}]
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["factorymind", "data-quality"],
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "FactoryMind Data Quality",
+  "uid": "factorymind-data-quality",
+  "version": 1
+}

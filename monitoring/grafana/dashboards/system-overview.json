@@ -1,0 +1,44 @@
+{
+  "description": "FactoryMind System Overview",
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "title": "Inference Service",
+      "type": "stat",
+      "targets": [{"expr": "up{job='inference-service'}", "legendFormat": ""}]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
+      "id": 2,
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"},
+      "title": "API Service",
+      "type": "stat",
+      "targets": [{"expr": "up{job='api-service'}", "legendFormat": ""}]
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 4},
+      "id": 3,
+      "title": "HTTP Request Rate",
+      "type": "timeseries",
+      "targets": [{"expr": "rate(http_requests_total[5m])", "legendFormat": "{{method}} {{endpoint}} {{status_code}}"}]
+    }
+  ],
+  "schemaVersion": 38,
+  "tags": ["factorymind", "overview"],
+  "time": {"from": "now-1h", "to": "now"},
+  "timezone": "browser",
+  "title": "FactoryMind System Overview",
+  "uid": "factorymind-overview",
+  "version": 1
+}

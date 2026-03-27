@@ -1,0 +1,22 @@
+name: Setup Python Environment
+description: Composite action to install Python 3.11 with pip caching
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: requirements-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          requirements-
+
+    - name: Upgrade pip, setuptools, and wheel
+      run: pip install --upgrade pip setuptools wheel
+      shell: bash

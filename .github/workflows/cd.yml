@@ -1,0 +1,208 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Docker image artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-images-${{ github.sha }}
+          path: /tmp
+        continue-on-error: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push inference-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/inference-service
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/inference-service:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/inference-service:staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push api-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/api-service
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/api-service:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/api-service:staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/frontend:staging
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to staging via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: deploy
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          script: |
+            cd /opt/factorymind
+            export IMAGE_TAG=${{ github.sha }}
+            docker compose pull
+            docker compose up -d
+
+      - name: Run smoke tests against staging
+        run: |
+          echo "Waiting for services to be healthy..."
+          sleep 15
+          curl --fail --retry 5 --retry-delay 5 --retry-connrefused \
+            "https://${{ secrets.STAGING_HOST }}/api/health" \
+            -o /dev/null -s -w "API health: %{http_code}\n"
+          curl --fail --retry 5 --retry-delay 5 --retry-connrefused \
+            "https://${{ secrets.STAGING_HOST }}/inference/health" \
+            -o /dev/null -s -w "Inference health: %{http_code}\n"
+          curl --fail --retry 5 --retry-delay 5 --retry-connrefused \
+            "https://${{ secrets.STAGING_HOST }}/" \
+            -o /dev/null -s -w "Frontend health: %{http_code}\n"
+          echo "All smoke tests passed."
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs: deploy-staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push inference-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/inference-service
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/inference-service:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/inference-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push api-service image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/api-service
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/api-service:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/api-service:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: frontend
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository }}/frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to production via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: deploy
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          script: |
+            cd /opt/factorymind
+            export IMAGE_TAG=${{ github.sha }}
+            docker compose pull
+            docker compose up -d
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": ":white_check_mark: *FactoryMind deployed to production successfully*",
+              "attachments": [
+                {
+                  "color": "good",
+                  "fields": [
+                    { "title": "Repository", "value": "${{ github.repository }}", "short": true },
+                    { "title": "Commit", "value": "${{ github.sha }}", "short": true },
+                    { "title": "Actor", "value": "${{ github.actor }}", "short": true },
+                    { "title": "Workflow run", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": ":x: *FactoryMind production deployment FAILED*",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    { "title": "Repository", "value": "${{ github.repository }}", "short": true },
+                    { "title": "Commit", "value": "${{ github.sha }}", "short": true },
+                    { "title": "Actor", "value": "${{ github.actor }}", "short": true },
+                    { "title": "Workflow run", "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}", "short": false }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
