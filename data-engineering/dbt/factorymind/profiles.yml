@@ -1,0 +1,13 @@
+factorymind:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('PGHOST', 'postgres') }}"
+      port: "{{ env_var('PGPORT', '5432') | int }}"
+      dbname: "{{ env_var('PGDATABASE', 'factorymind') }}"
+      user: "{{ env_var('PGUSER', 'factorymind') }}"
+      password: "{{ env_var('PGPASSWORD', 'secret') }}"
+      schema: public
+      threads: 4
+      keepalives_idle: 0

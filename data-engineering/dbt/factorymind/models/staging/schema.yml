@@ -1,0 +1,38 @@
+version: 2
+
+sources:
+  - name: factorymind
+    database: factorymind
+    schema: public
+    tables:
+      - name: inspections
+        description: "Raw inspection records from the conveyor belt"
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: camera_id
+            tests:
+              - not_null
+          - name: inspected_at
+            tests:
+              - not_null
+      - name: defect_detection_records
+        description: "Individual defect detections per inspection"
+
+models:
+  - name: stg_inspections
+    description: "Cleaned and typed inspection records"
+    columns:
+      - name: inspection_id
+        tests:
+          - unique
+          - not_null
+  - name: stg_defect_detections
+    description: "Cleaned defect detection records"
+    columns:
+      - name: detection_id
+        tests:
+          - unique
+          - not_null
