@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   factorymind:
     driver: bridge
@@ -17,6 +15,9 @@ volumes:
   mvtec_data:
 
 services:
+  # ─────────────────────────────────────────
+  # PostgreSQL + pgvector  (host: 5435)
+  # ─────────────────────────────────────────
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -24,7 +25,7 @@ services:
       POSTGRES_USER: factorymind
       POSTGRES_PASSWORD: secret
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -36,10 +37,13 @@ services:
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # Redis  (host: 6381)
+  # ─────────────────────────────────────────
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -50,6 +54,9 @@ services:
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # Kafka KRaft  (host: 9092 external, 29092 for host clients)
+  # ─────────────────────────────────────────
   kafka:
     image: confluentinc/cp-kafka:7.7.1
     environment:
@@ -92,6 +99,9 @@ services:
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # LocalStack (S3)  (host: 4566)
+  # ─────────────────────────────────────────
   localstack:
     image: localstack/localstack:3.8.1
     environment:
@@ -107,8 +117,13 @@ services:
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # MLflow  (host: 5000)
+  # ─────────────────────────────────────────
   mlflow-server:
-    image: ghcr.io/mlflow/mlflow:v2.16.2
+    build:
+      context: services/mlflow-server
+      dockerfile: Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -129,6 +144,9 @@ services:
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # Application Services
+  # ─────────────────────────────────────────
   inference-service:
     build:
       context: services/inference-service
@@ -147,7 +165,7 @@ services:
       POSTGRES_URL: postgresql://factorymind:secret@postgres:5432/factorymind
       S3_ENDPOINT_URL: http://localstack:4566
     ports:
-      - "8001:8001"
+      - "8002:8001"
     networks:
       - factorymind
 
@@ -205,10 +223,13 @@ services:
       NEXT_PUBLIC_API_URL: http://localhost:8000
       NEXT_PUBLIC_WS_URL: ws://localhost:8000
     ports:
-      - "3000:3000"
+      - "3002:3000"
     networks:
       - factorymind
 
+  # ─────────────────────────────────────────
+  # Monitoring Stack
+  # ─────────────────────────────────────────
   prometheus:
     image: prom/prometheus:v2.54.1
     volumes:
@@ -228,7 +249,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
-      - "3001:3000"
+      - "3003:3000"
     networks:
       - factorymind
 
