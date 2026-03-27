@@ -1,0 +1,18 @@
+[project]
+name = "factorymind-tests"
+version = "0.1.0"
+description = "Integration and E2E test suite for the FactoryMind MLOps platform"
+
+# Runtime deps are declared in requirements.txt.
+# This section is for documentation only — tests run inside Docker or with
+# manually installed deps via: pip install -r tests/requirements.txt
+#
+# pytest==8.3.3
+# pytest-asyncio==0.24.0
+# httpx==0.27.2
+# Pillow==11.0.0
+# anyio==4.6.0
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["."]
