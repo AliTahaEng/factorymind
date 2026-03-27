@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Node
+node_modules/
+.next/
+out/
+.turbo/
+
+# ML / DVC
+*.pt
+*.onnx
+*.torchscript
+/training/data/
+/training/models/
+.dvc/cache/
+*.dvc
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+
+# Docker
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# W&B
+wandb/
+
+# Worktrees
+.worktrees/
