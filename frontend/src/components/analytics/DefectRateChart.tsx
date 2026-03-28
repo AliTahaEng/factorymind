@@ -35,9 +35,17 @@ export function DefectRateChart() {
     );
   }
 
+  if (data.length === 0) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-xl border border-gray-200 bg-white text-sm text-gray-400">
+        No defect data yet. Start the camera simulator to generate data.
+      </div>
+    );
+  }
+
   const chartData = data.map((d) => ({
-    date: d.date,
-    defect_rate: parseFloat((d.defect_rate * 100).toFixed(2)),
+    date: typeof d.period === 'string' ? d.period.slice(0, 10) : String(d.period),
+    defect_rate: parseFloat((d.defect_rate_pct ?? 0).toFixed(2)),
   }));
 
   return (

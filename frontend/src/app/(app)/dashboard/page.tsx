@@ -49,23 +49,23 @@ export default function DashboardPage() {
   // Today's inspections
   const todayInspections =
     inspectionsData?.items.filter(
-      (i) => new Date(i.timestamp).toDateString() === today
+      (i) => new Date(i.inspected_at).toDateString() === today
     ).length ?? 0;
 
   // Latest defect rate
-  const latestRate = defectRates?.at(-1);
+  const latestRate = defectRates && defectRates.length > 0 ? defectRates[defectRates.length - 1] : null;
   const defectRateDisplay = latestRate
-    ? `${(latestRate.defect_rate * 100).toFixed(1)}%`
+    ? `${(latestRate.defect_rate_pct ?? 0).toFixed(1)}%`
     : '—';
 
   // Unique cameras
   const activeCameras = new Set(inspectionsData?.items.map((i) => i.camera_id) ?? []).size;
 
-  // Avg latency across all models
+  // Avg latency from inspections
+  const items = inspectionsData?.items ?? [];
   const avgLatency =
-    modelPerf && modelPerf.length > 0
-      ? (modelPerf.reduce((sum, m) => sum + m.avg_latency_ms, 0) / modelPerf.length).toFixed(0) +
-        ' ms'
+    items.length > 0
+      ? (items.reduce((sum, i) => sum + i.processing_time_ms, 0) / items.length).toFixed(0) + ' ms'
       : '—';
 
   return (
@@ -89,7 +89,7 @@ export default function DashboardPage() {
           value={defectRateDisplay}
           sub="Latest recorded"
           accent={
-            latestRate && latestRate.defect_rate > 0.1 ? 'text-red-600' : 'text-green-600'
+            latestRate && (latestRate.defect_rate_pct ?? 0) > 10 ? 'text-red-600' : 'text-green-600'
           }
         />
         <StatCard

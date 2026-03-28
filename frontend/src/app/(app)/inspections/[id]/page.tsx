@@ -3,7 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { getInspection } from '@/lib/api';
-import { DefectBadge } from '@/components/live-feed/DefectBadge';
 
 function Field({ label, value }: { label: string; value: React.ReactNode }) {
   return (
@@ -46,7 +45,7 @@ export default function InspectionDetailPage() {
     );
   }
 
-  const pct = Math.round(inspection.defect_probability * 100);
+  const pct = Math.round(inspection.defect_score * 100);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,18 +68,21 @@ export default function InspectionDetailPage() {
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-5 text-sm font-semibold text-gray-800">Details</h2>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-4">
-            <Field label="ID" value={<span className="font-mono text-xs">{inspection.id}</span>} />
+            <Field label="Inspection ID" value={<span className="font-mono text-xs">{inspection.inspection_id}</span>} />
+            <Field label="Image ID" value={<span className="font-mono text-xs">{inspection.image_id}</span>} />
             <Field label="Camera" value={inspection.camera_id} />
             <Field
-              label="Timestamp"
-              value={new Date(inspection.timestamp).toLocaleString()}
+              label="Inspected At"
+              value={new Date(inspection.inspected_at).toLocaleString()}
             />
-            <Field label="Model Version" value={inspection.model_version} />
+            <Field label="Model Version" value={inspection.model_version ?? '—'} />
             <Field label="Processing Time" value={`${inspection.processing_time_ms} ms`} />
+            <Field label="Anomaly Score" value={(inspection.anomaly_score * 100).toFixed(1) + '%'} />
+            <Field label="Classification" value={inspection.classification_label ?? '—'} />
             <Field
               label="Status"
               value={
-                inspection.has_defect ? (
+                inspection.is_defective ? (
                   <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">
                     Defect Detected
                   </span>
@@ -94,9 +96,9 @@ export default function InspectionDetailPage() {
           </dl>
         </div>
 
-        {/* Defect probability */}
+        {/* Defect score gauge */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-sm font-semibold text-gray-800">Defect Probability</h2>
+          <h2 className="mb-5 text-sm font-semibold text-gray-800">Defect Score</h2>
           <div className="flex flex-col items-center gap-4">
             <div className="relative flex h-36 w-36 items-center justify-center">
               <svg className="absolute inset-0" viewBox="0 0 120 120">
@@ -124,43 +126,42 @@ export default function InspectionDetailPage() {
         </div>
       </div>
 
-      {/* Defects list */}
+      {/* Bounding boxes / detected defects */}
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-gray-800">
-          Detected Defects ({inspection.defects.length})
+          Detected Bounding Boxes ({inspection.bounding_boxes.length})
         </h2>
-        {inspection.defects.length === 0 ? (
-          <p className="text-sm text-gray-400">No defects detected.</p>
+        {inspection.bounding_boxes.length === 0 ? (
+          <p className="text-sm text-gray-400">No bounding boxes detected.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {inspection.defects.map((defect, i) => (
+            {inspection.bounding_boxes.map((bbox, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
               >
-                <DefectBadge defect={defect} />
-                {defect.bbox && (
-                  <span className="font-mono text-xs text-gray-400">
-                    bbox: [{defect.bbox.join(', ')}]
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                      bbox.confidence > 0.8
+                        ? 'border-red-300 bg-red-100 text-red-800'
+                        : bbox.confidence > 0.5
+                        ? 'border-yellow-300 bg-yellow-100 text-yellow-800'
+                        : 'border-green-300 bg-green-100 text-green-800'
+                    }`}
+                  >
+                    {bbox.label}
+                    <span className="opacity-75">({(bbox.confidence * 100).toFixed(0)}%)</span>
                   </span>
-                )}
+                </div>
+                <span className="font-mono text-xs text-gray-400">
+                  x:{bbox.x.toFixed(0)} y:{bbox.y.toFixed(0)} w:{bbox.w.toFixed(0)} h:{bbox.h.toFixed(0)}
+                </span>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {/* Image if available */}
-      {inspection.image_url && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-sm font-semibold text-gray-800">Inspection Image</h2>
-          <img
-            src={inspection.image_url}
-            alt="Inspection frame"
-            className="max-h-96 rounded-lg object-contain"
-          />
-        </div>
-      )}
     </div>
   );
 }

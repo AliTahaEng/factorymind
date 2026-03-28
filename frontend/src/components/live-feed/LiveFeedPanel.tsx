@@ -1,9 +1,8 @@
 'use client';
 
 import { useLiveFeed } from '@/hooks/useLiveFeed';
-import { DefectBadge } from './DefectBadge';
 
-function ProbabilityBar({ value }: { value: number }) {
+function ConfidenceBar({ value }: { value: number }) {
   const pct = Math.round(value * 100);
   const barColor = value > 0.5 ? 'bg-red-500' : 'bg-green-500';
   return (
@@ -51,19 +50,23 @@ export function LiveFeedPanel() {
               <li key={event.inspection_id} className="px-4 py-3 hover:bg-gray-50">
                 <div className="mb-1 flex items-center justify-between">
                   <span className="text-xs font-semibold text-gray-700">
-                    Camera {event.camera_id}
+                    {event.inspection_id.slice(0, 8)}…
                   </span>
                   <span className="text-xs text-gray-400">
                     {new Date(event.timestamp).toLocaleTimeString()}
                   </span>
                 </div>
-                <ProbabilityBar value={event.defect_probability} />
-                {event.defects.length > 0 && (
+                <ConfidenceBar value={event.confidence} />
+                {event.defect_detected && event.defect_type && (
                   <div className="mt-1.5 flex flex-wrap gap-1">
-                    {event.defects.map((d, i) => (
-                      <DefectBadge key={i} defect={d} />
-                    ))}
+                    <span className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
+                      {event.defect_type}
+                      <span className="opacity-75">({(event.confidence * 100).toFixed(0)}%)</span>
+                    </span>
                   </div>
+                )}
+                {!event.defect_detected && (
+                  <span className="mt-1 inline-block text-xs text-green-600 font-medium">✓ OK</span>
                 )}
               </li>
             ))}

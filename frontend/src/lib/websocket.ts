@@ -49,7 +49,7 @@ export class WebSocketManager {
   private _open(): void {
     if (!this.token) return;
     const wsBase = process.env.NEXT_PUBLIC_WS_URL ?? 'ws://localhost:8000';
-    const url = `${wsBase}/api/v1/ws/live-feed?token=${this.token}`;
+    const url = `${wsBase}/ws/live-feed?token=${this.token}`;
     const ws = new WebSocket(url);
     this.ws = ws;
 

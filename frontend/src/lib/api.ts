@@ -58,7 +58,7 @@ export async function getMe(): Promise<User> {
 
 export async function getInspections(page = 1, size = 20): Promise<InspectionList> {
   const res = await apiClient.get<InspectionList>('/api/v1/inspections', {
-    params: { page, size },
+    params: { page, page_size: size },
   });
   return res.data;
 }
@@ -69,13 +69,13 @@ export async function getInspection(id: string): Promise<Inspection> {
 }
 
 export async function getDefectRates(): Promise<DefectRate[]> {
-  const res = await apiClient.get<DefectRate[]>('/api/v1/analytics/defect-rates');
-  return res.data;
+  const res = await apiClient.get<{ data: DefectRate[]; days: number }>('/api/v1/analytics/defect-rates');
+  return res.data.data;
 }
 
 export async function getModelPerformance(): Promise<ModelPerformance[]> {
-  const res = await apiClient.get<ModelPerformance[]>('/api/v1/analytics/model-performance');
-  return res.data;
+  const res = await apiClient.get<{ models: ModelPerformance[] }>('/api/v1/analytics/model-performance');
+  return res.data.models;
 }
 
 export async function getModels(): Promise<ModelVersion[]> {
